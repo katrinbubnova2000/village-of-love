@@ -1,0 +1,1164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Village of Love — Michael & Kate</title>
+
+<style>
+  :root{
+    --pink:#ff69b4;
+    --aqua:#66fcf1;
+    --panel: rgba(10,18,22,.93);
+    --ink:#ffeef6;
+    --muted: rgba(255,238,246,.72);
+    --danger:#ff3b6a;
+    --gold:#ffd36e;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; height:100vh; overflow:hidden;
+    background: radial-gradient(1200px 900px at 50% 40%, #3a1830 0%, #120610 60%);
+    font-family: ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
+    color:var(--ink);
+  }
+  .wrap{
+    height:100%;
+    display:grid;
+    grid-template-columns: 1fr 380px;
+    gap:12px;
+    padding:12px;
+  }
+  .game{
+    position:relative;
+    border:1px solid rgba(255,105,180,.35);
+    border-radius:16px;
+    overflow:hidden;
+    box-shadow:0 20px 50px rgba(0,0,0,.45);
+    background: rgba(0,0,0,.2);
+  }
+  canvas{display:block; width:100%; height:100%;}
+  .hud{
+    position:absolute; left:14px; bottom:14px;
+    padding:10px 12px;
+    border-radius:12px;
+    background: rgba(0,0,0,.55);
+    border:1px solid rgba(255,105,180,.25);
+    font-size:13px;
+    color:var(--muted);
+    backdrop-filter: blur(6px);
+    max-width: 88%;
+    line-height:1.25;
+  }
+  .hud b{color:var(--aqua)}
+  .panel{
+    border:1px solid rgba(255,105,180,.35);
+    border-radius:16px;
+    background:var(--panel);
+    padding:14px;
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+    box-shadow:0 20px 50px rgba(0,0,0,.45);
+  }
+  .title{
+    display:flex; justify-content:space-between; align-items:baseline; gap:12px;
+  }
+  .title h1{margin:0; font-size:16px; letter-spacing:.4px}
+  .chip{
+    font-size:12px; color:var(--gold);
+    border:1px solid rgba(255,211,110,.35);
+    padding:4px 8px; border-radius:999px;
+    background: rgba(255,211,110,.08);
+    white-space:nowrap;
+  }
+  .section h2{
+    margin:0 0 8px 0;
+    font-size:13px;
+    color:var(--aqua);
+    letter-spacing:.5px;
+    text-transform:uppercase;
+  }
+  .box{
+    padding:10px 12px;
+    border-radius:12px;
+    border:1px solid rgba(102,252,241,.18);
+    background: rgba(0,0,0,.35);
+    font-size:13px;
+    color:var(--muted);
+  }
+  .box b{color:var(--ink)}
+  .log{min-height:120px; max-height:240px; overflow:auto; line-height:1.35}
+  .line{margin:0 0 8px 0}
+  .sys{color:var(--aqua)}
+  .warn{color:var(--danger)}
+  .npc{color:var(--ink)}
+  .invTags{display:flex; flex-wrap:wrap; gap:8px; margin-top:8px}
+  .tag{
+    font-size:12px; padding:4px 8px;
+    border-radius:999px;
+    border:1px solid rgba(255,105,180,.35);
+    background: rgba(255,105,180,.12);
+    color:var(--ink);
+  }
+  .row{display:flex; gap:8px}
+  input,button{
+    border-radius:12px;
+    border:1px solid rgba(255,105,180,.25);
+    background: rgba(0,0,0,.55);
+    color:var(--ink);
+    padding:10px 12px;
+    font: inherit;
+    font-size:13px;
+    outline:none;
+  }
+  input{flex:1}
+  button{
+    cursor:pointer;
+    color:var(--aqua);
+    transition: transform .06s ease, border-color .2s ease, opacity .2s ease;
+    white-space:nowrap;
+  }
+  button:hover{border-color: rgba(102,252,241,.55)}
+  button:active{transform: translateY(1px)}
+  .disabled{opacity:.5; pointer-events:none}
+
+  .modalBack{
+    position:absolute; inset:0;
+    background: rgba(0,0,0,.62);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:16px;
+  }
+  .modal{
+    width:min(980px,100%);
+    border-radius:16px;
+    border:1px solid rgba(255,105,180,.35);
+    background: rgba(10,18,22,.96);
+    padding:16px;
+    box-shadow: 0 30px 90px rgba(0,0,0,.6);
+  }
+  .modalTop{
+    display:flex; justify-content:space-between; gap:12px;
+    align-items:center;
+    margin-bottom:10px;
+  }
+  .modalTop .name{font-weight:700; color:var(--gold)}
+  .modalTop .hint{font-size:12px; color:var(--muted)}
+  .modalText{font-size:14px; line-height:1.4; color:var(--ink); margin-bottom:12px}
+  .choices{display:flex; flex-wrap:wrap; gap:8px}
+  .choiceBtn{flex:1 1 45%; text-align:left}
+
+  .bigTitle{font-size:22px; letter-spacing:.4px; margin:0 0 10px 0; color:var(--gold)}
+  .sparkleLine{font-size:16px; color:var(--muted); margin: 8px 0 14px 0}
+</style>
+</head>
+
+<body>
+<div class="wrap">
+  <div class="game">
+    <canvas id="cv" width="960" height="540"></canvas>
+
+    <div class="hud">
+      Move: <b>WASD</b> · Interact: <b>E</b> · Close popups: <b>Esc</b> · Music toggle: <b>P</b><br/>
+      Collect 3 words → find Kate → hack her heart → claim gift 💋
+    </div>
+
+    <div class="modalBack" id="modalBack">
+      <div class="modal">
+        <div class="modalTop">
+          <div class="name" id="dlgName">NPC</div>
+          <div class="hint" id="dlgHint">Press <b>Esc</b> to close</div>
+        </div>
+        <div class="modalText" id="dlgText"></div>
+        <div class="choices" id="dlgChoices"></div>
+      </div>
+    </div>
+  </div>
+
+  <aside class="panel">
+    <div class="title">
+      <h1>Village of Love</h1>
+      <div class="chip" id="stageChip">STAGE 0/4</div>
+    </div>
+
+    <div class="section">
+      <h2>Quest Log</h2>
+      <div class="box" id="questBox"></div>
+    </div>
+
+    <div class="section">
+      <h2>Collected Words</h2>
+      <div class="box">
+        Words collected:
+        <div class="invTags" id="invTags"></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>System</h2>
+      <div class="box log" id="log"></div>
+    </div>
+
+    <div class="section">
+      <h2>Flag Submit</h2>
+      <div class="row">
+        <input id="flagInput" placeholder="FLAG{...}" autocomplete="off" />
+        <button id="submitFlagBtn" class="disabled">Submit</button>
+      </div>
+      <div class="box" style="margin-top:10px; font-size:12px;">
+        If music doesn’t play, click anywhere on the page once (browser autoplay rules).
+      </div>
+    </div>
+  </aside>
+</div>
+
+<script>
+/* =========================
+   PERSONALIZE
+   ========================= */
+const FINAL_FLAG = "FLAG{YOU_HACKED_MY_HEART}";
+const GIFT_LINK_PLACEHOLDER = "gift.html"; // replace later
+
+/* =========================
+   UI
+   ========================= */
+const cv = document.getElementById("cv");
+const ctx = cv.getContext("2d");
+const elLog = document.getElementById("log");
+const elQuest = document.getElementById("questBox");
+const elStage = document.getElementById("stageChip");
+const elInvTags = document.getElementById("invTags");
+const flagInput = document.getElementById("flagInput");
+const submitFlagBtn = document.getElementById("submitFlagBtn");
+
+const modalBack = document.getElementById("modalBack");
+const dlgName = document.getElementById("dlgName");
+const dlgText = document.getElementById("dlgText");
+const dlgChoices = document.getElementById("dlgChoices");
+const dlgHint = document.getElementById("dlgHint");
+
+function addLog(html, cls="line") {
+  const d = document.createElement("div");
+  d.className = cls;
+  d.innerHTML = html;
+  elLog.appendChild(d);
+  elLog.scrollTop = elLog.scrollHeight;
+}
+function escapeHTML(s){
+  return String(s).replace(/[&<>"']/g, c => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  }[c]));
+}
+function clamp(v,min,max){ return Math.max(min, Math.min(max, v)); }
+function dist(x1,y1,x2,y2){ return Math.hypot(x1-x2, y1-y2); }
+
+/* =========================
+   MODAL
+   ========================= */
+let dialogOpen = false;
+let dialogMode = "normal"; // normal | intro
+function openDialog({ name, text, choices, hint="Press Esc to close" }) {
+  dialogOpen = true;
+  modalBack.style.display = "flex";
+  dlgName.textContent = name;
+  dlgText.innerHTML = text;
+  dlgHint.innerHTML = hint;
+  dlgChoices.innerHTML = "";
+  (choices || []).forEach(ch => {
+    const b = document.createElement("button");
+    b.className = "choiceBtn";
+    b.textContent = ch.label;
+    if (ch.disabled){
+      b.disabled = true;
+      b.style.opacity = "0.5";
+      b.style.pointerEvents = "none";
+    }
+    b.onclick = () => ch.onPick?.();
+    dlgChoices.appendChild(b);
+  });
+}
+function setModalVisible(v){
+  modalBack.style.display = v ? "flex" : "none";
+  dialogOpen = v;
+}
+function closeDialog(){
+  if (dialogMode === "intro") return;
+  setModalVisible(false);
+}
+window.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && dialogOpen && dialogMode !== "intro") {
+    e.preventDefault();
+    closeDialog();
+  }
+});
+
+/* =========================
+   MUSIC (4 tracks)
+   assets/music.mp3  = main romantic loop
+   assets/music2.mp3 = wrong answer one-shot
+   assets/music3.mp3 = correct answer one-shot
+   assets/music4.mp3 = final kisses loop
+   ========================= */
+let musicOn = true;
+let currentMode = "main"; // main | final
+
+const musicMain = new Audio("assets/music.mp3");
+musicMain.loop = true;
+musicMain.volume = 0.35;
+
+const musicWrong = new Audio("assets/music2.mp3");
+musicWrong.loop = false;
+musicWrong.volume = 0.70;
+
+const musicCorrect = new Audio("assets/music3.mp3");
+musicCorrect.loop = false;
+musicCorrect.volume = 0.70;
+
+const musicFinal = new Audio("assets/music4.mp3");
+musicFinal.loop = true;
+musicFinal.volume = 0.45;
+
+function stopAllMusic(){
+  for (const a of [musicMain, musicWrong, musicCorrect, musicFinal]){
+    a.pause();
+    a.currentTime = 0;
+  }
+}
+function playMain(){
+  if (!musicOn) return;
+  currentMode = "main";
+  musicFinal.pause();
+  musicFinal.currentTime = 0;
+  if (!musicMain.paused) return;
+  musicMain.play().catch(()=>{});
+}
+function playFinal(){
+  if (!musicOn) return;
+  currentMode = "final";
+  musicMain.pause();
+  musicMain.currentTime = 0;
+  if (!musicFinal.paused) return;
+  musicFinal.play().catch(()=>{});
+}
+async function playOneShotAndResume(oneShotAudio){
+  if (!musicOn) return;
+
+  const long = (currentMode === "final") ? musicFinal : musicMain;
+  const wasPlaying = !long.paused;
+  if (wasPlaying) long.pause();
+
+  try{
+    oneShotAudio.currentTime = 0;
+    await oneShotAudio.play();
+  } catch {
+    if (musicOn && wasPlaying) long.play().catch(()=>{});
+    return;
+  }
+
+  oneShotAudio.onended = () => {
+    if (musicOn) long.play().catch(()=>{});
+  };
+}
+function toggleMusic(){
+  musicOn = !musicOn;
+  addLog(`<span class="sys">Music:</span> ${musicOn ? "ON" : "OFF"}`, "line");
+  if (!musicOn) stopAllMusic();
+  else (currentMode === "final" ? playFinal() : playMain());
+}
+// Toggle with P (and NEVER while typing in inputs)
+window.addEventListener("keydown", (e) => {
+  const tag = (document.activeElement?.tagName || "").toLowerCase();
+  const typing = tag === "input" || tag === "textarea";
+  if (!typing && e.key.toLowerCase() === "p") toggleMusic();
+});
+
+/* =========================
+   ASSETS
+   ========================= */
+function loadImage(src){
+  const img = new Image();
+  img.src = src;
+  img.onerror = () => console.warn("Failed to load:", src);
+  return img;
+}
+const bgImg    = loadImage("assets/Background.png");
+const mishaImg = loadImage("assets/Misha.png");
+const npcRangerImg  = loadImage("assets/Character1.webp");
+const npcWarriorImg = loadImage("assets/Character3.webp");
+const npcEchoImg    = loadImage("assets/Character4.webp");
+const kateImg       = loadImage("assets/Kate.webp");
+
+/* =========================
+   WORLD + CAMERA
+   ========================= */
+const world = { w: 1600, h: 900 };
+const camera = { x: 0, y: 0 };
+function updateCamera(){
+  camera.x = clamp(player.x - cv.width/2, 0, world.w - cv.width);
+  camera.y = clamp(player.y - cv.height/2, 0, world.h - cv.height);
+}
+
+/* =========================
+   STATE
+   ========================= */
+const state = {
+  stage: 0,          // 0 intro, 1 ranger, 2 warrior, 3 echo, 4 kate/flag, 5 final prompt, 6 complete
+  words: new Set(),  // SPECALS, RELAX, LOVE
+  flagRevealed: false,
+  cutscene: false,
+  finalAccepted: false,
+};
+
+function renderInventory(){
+  elInvTags.innerHTML="";
+  [...state.words].forEach(w=>{
+    const t=document.createElement("div");
+    t.className="tag"; t.textContent=w;
+    elInvTags.appendChild(t);
+  });
+}
+function updateQuest(){
+  const stageLabel = {
+    0:"STAGE 0/4",
+    1:"STAGE 1/4",
+    2:"STAGE 2/4",
+    3:"STAGE 3/4",
+    4:"STAGE 4/4",
+    5:"FINAL",
+    6:"COMPLETE"
+  };
+  elStage.textContent = stageLabel[state.stage] || "STAGE";
+
+  if (state.stage === 0) elQuest.innerHTML = `Click <b>Begin</b> to start your quest.`;
+  if (state.stage === 1) elQuest.innerHTML = `Find the <b>Valentine Ranger</b> and pass the gate.`;
+  if (state.stage === 2) elQuest.innerHTML = `Find the <b>Moonlit Warrior</b> and prove devotion.`;
+  if (state.stage === 3) elQuest.innerHTML = `Find the <b>Echo Traveler</b> and speak the right promise.`;
+  if (state.stage === 4) elQuest.innerHTML = `Kate has appeared. Find her and <b>hack her heart</b> 💘`;
+  if (state.stage === 5) elQuest.innerHTML = `One last answer…`;
+  if (state.stage === 6) elQuest.innerHTML = `Quest complete 💗`;
+
+  if (state.flagRevealed) submitFlagBtn.classList.remove("disabled");
+  else submitFlagBtn.classList.add("disabled");
+}
+
+/* =========================
+   PLAYER + NPCs (feet positions)
+   ========================= */
+const player = {
+  x: 220, y: 560,
+  w: 120, h: 220,
+  speed: 2.7,
+  facing: 1,
+  bobPhase: 0
+};
+
+const npcs = {
+  ranger:  { id:"ranger",  name:"Valentine Ranger", x: 430,  y: 520, img: npcRangerImg,  w:120, h:220, visible:true },
+  warrior: { id:"warrior", name:"Moonlit Warrior",   x: 820,  y: 520, img: npcWarriorImg, w:120, h:220, visible:true },
+  echo:    { id:"echo",    name:"Echo Traveler",     x: 1180, y: 520, img: npcEchoImg,    w:120, h:220, visible:true },
+  kate:    { id:"kate",    name:"Kate",             x: 1350, y: 520, img: kateImg,       w:120, h:220, visible:false }
+};
+
+/* =========================
+   PARTICLES (hearts + kisses)
+   ========================= */
+const particles = [];
+function spawnParticle(type, x,y, vx,vy, life=120, size=18, alpha=1){
+  particles.push({type,x,y,vx,vy,life,age:0,size,alpha});
+}
+function updateParticles(){
+  for (let i=particles.length-1;i>=0;i--){
+    const p=particles[i];
+    p.age++;
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vy -= 0.005;
+    if (p.age>p.life) particles.splice(i,1);
+  }
+}
+
+/* =========================
+   INPUT
+   ========================= */
+const keys = new Set();
+window.addEventListener("keydown", (e) => {
+  keys.add(e.key.toLowerCase());
+  if (e.key.toLowerCase() === "e") {
+    if (!dialogOpen) interact();
+  }
+});
+window.addEventListener("keyup", (e) => keys.delete(e.key.toLowerCase()));
+
+/* =========================
+   INTERACTION
+   ========================= */
+function visibleNPCs(){
+  const list = [npcs.ranger, npcs.warrior, npcs.echo];
+  if (npcs.kate.visible) list.push(npcs.kate);
+  return list;
+}
+function nearestNPC(){
+  const range = 85;
+  let best = null, bd = range;
+  for (const n of visibleNPCs()){
+    const d = dist(player.x, player.y, n.x, n.y);
+    if (d < bd){ bd = d; best = n; }
+  }
+  return best;
+}
+function currentQuestTarget(){
+  if (state.stage === 1) return npcs.ranger;
+  if (state.stage === 2) return npcs.warrior;
+  if (state.stage === 3) return npcs.echo;
+  if (state.stage === 4) return npcs.kate.visible ? npcs.kate : null;
+  return null;
+}
+function interact(){
+  if (state.stage === 0) return;
+  if (state.cutscene) return;
+  const n = nearestNPC();
+  if (!n) return;
+  if (n.id === "ranger") return rangerIntro();
+  if (n.id === "warrior") return warriorIntro();
+  if (n.id === "echo") return echoIntro();
+  if (n.id === "kate") return kateIntro();
+}
+
+/* =========================
+   QUIZ HELPERS
+   ========================= */
+let retryFn = null;
+function awardWord(word){
+  state.words.add(word);
+  renderInventory();
+  addLog(`<span class="sys">Collected:</span> <b>${escapeHTML(word)}</b>`, "line");
+}
+function wrongAnswer(title, msg){
+  playOneShotAndResume(musicWrong);
+  openDialog({
+    name:title,
+    text: msg,
+    choices:[{label:"Try again", onPick: () => { setModalVisible(false); retryFn?.(); }}],
+    hint:"Click Try again"
+  });
+}
+function correctAnswerSound(){
+  playOneShotAndResume(musicCorrect);
+}
+
+/* ---------- Ranger (SPECALS) ---------- */
+function rangerIntro(){
+  if (state.words.has("SPECALS")){
+    openDialog({
+      name:"Valentine Ranger",
+      text:`You're already cleared. Keep your heart steady and your promises stronger.`,
+      choices:[{label:"Close", onPick: () => setModalVisible(false)}],
+      hint:"Click Close"
+    });
+    return;
+  }
+  openDialog({
+    name:"Valentine Ranger",
+    text: `
+      <b>Halt.</b> This village is protected by rules—especially the ones written in kindness.<br><br>
+      You look strong, Michael… brave enough to face dragons and deadlines.<br>
+      But the gate of love opens only to those who can be <i>gentle</i>.<br><br>
+      Answer correctly, and I’ll allow you through. Answer poorly… and I won’t pretend I’m amused.
+    `,
+    choices:[{label:"Start the quiz", onPick: () => { setModalVisible(false); rangerQuestion(); }}],
+    hint:"Click Start"
+  });
+}
+function rangerQuestion(){
+  retryFn = rangerQuestion;
+  openDialog({
+    name:"Valentine Ranger — Quiz",
+    text:`What would you promise to do whenever your love is upset?`,
+    choices:[
+      {label:"1) Kick her ass", onPick: () => wrongAnswer("Valentine Ranger",
+        `You <b>absolute menace</b>. Violence has no place here.<br><br>
+         Don’t you ever dare to lay a finger on her. I’ll assume you were joking… once.<br>
+         Try again. And remember: I’m not patient with idiots.`)},
+      {label:"2) Leave her alone", onPick: () => wrongAnswer("Valentine Ranger",
+        `Doesn’t sound evil… but it’s not love either.<br><br>
+         Do you really believe leaving a sad lady alone is the best move?<br>
+         Try again.`)},
+      {label:"3) Start talking about my labs", onPick: () => wrongAnswer("Valentine Ranger",
+        `Oh no… the “me, me, me” strategy.<br><br>
+         Love needs presence, not a lecture. Come on—show me you’ve got sense in you.`)},
+      {label:"4) Order sushi and let her sleep on Specials", onPick: () => {
+        correctAnswerSound();
+        awardWord("SPECALS");
+        openDialog({
+          name:"Valentine Ranger",
+          text:`That’s my boy.<br><br>
+                Now I see you’re capable of love—and getting closer to your Valentine.<br>
+                I’ll let you through… but remember… <b>I’m watching you.</b>`,
+          choices:[{label:"Pick up my hint (SPECALS)", onPick: () => { setModalVisible(false); state.stage = 2; updateQuest(); }}],
+          hint:"Click to continue"
+        });
+      }},
+    ],
+    hint:"Choose wisely"
+  });
+}
+
+/* ---------- Warrior (RELAX) ---------- */
+function warriorIntro(){
+  if (state.stage < 2) return;
+  if (state.words.has("RELAX")){
+    openDialog({
+      name:"Moonlit Warrior",
+      text:`You already carry <b>RELAX</b>. Keep your devotion consistent.`,
+      choices:[{label:"Close", onPick: () => setModalVisible(false)}],
+      hint:"Click Close"
+    });
+    return;
+  }
+  openDialog({
+    name:"Moonlit Warrior",
+    text: `
+      The moon doesn’t ask if it should shine—it simply does.<br><br>
+      If your love is your home, your care must be constant.<br>
+      Answer me now… and don’t be timid.
+    `,
+    choices:[{label:"Start the quiz", onPick: () => { setModalVisible(false); warriorQuestion(); }}],
+    hint:"Click Start"
+  });
+}
+function warriorQuestion(){
+  retryFn = warriorQuestion;
+  openDialog({
+    name:"Moonlit Warrior — Quiz",
+    text:`How often do you need to scratch your love’s back?`,
+    choices:[
+      {label:"1) Once a day", onPick: () => wrongAnswer("Moonlit Warrior", `Go bigger.`)},
+      {label:"2) Twice a day", onPick: () => wrongAnswer("Moonlit Warrior", `Go bigger.`)},
+      {label:"3) Three times a day", onPick: () => wrongAnswer("Moonlit Warrior", `Go bigger.`)},
+      {label:"4) 24/7", onPick: () => {
+        correctAnswerSound();
+        awardWord("RELAX");
+        openDialog({
+          name:"Moonlit Warrior",
+          text:`Correct.<br><br>Devotion doesn’t clock out.`,
+          choices:[{label:"Pick up my hint (RELAX)", onPick: () => { setModalVisible(false); state.stage = 3; updateQuest(); }}],
+          hint:"Click to continue"
+        });
+      }},
+    ],
+    hint:"Choose one"
+  });
+}
+
+/* ---------- Echo (LOVE) + reveal Kate ---------- */
+function echoIntro(){
+  if (state.stage < 3) return;
+  if (state.words.has("LOVE")){
+    openDialog({
+      name:"Echo Traveler",
+      text:`You already hold <b>LOVE</b>. Go find what you came here for…`,
+      choices:[{label:"Close", onPick: () => setModalVisible(false)}],
+      hint:"Click Close"
+    });
+    return;
+  }
+  openDialog({
+    name:"Echo Traveler",
+    text: `
+      Every promise echoes somewhere—especially the ones we say out loud.<br><br>
+      Answer me, traveler… what do you swear you’ll tell her every day?
+    `,
+    choices:[{label:"Start the quiz", onPick: () => { setModalVisible(false); echoQuestion(); }}],
+    hint:"Click Start"
+  });
+}
+function echoQuestion(){
+  retryFn = echoQuestion;
+  openDialog({
+    name:"Echo Traveler — Quiz",
+    text:`If I help you find the love of your life, what do you promise to tell her every day?`,
+    choices:[
+      {label:"1) Pepe, sheine", onPick: () => wrongAnswer("Echo Traveler", `Bruuuuh… wtf 😭 Try again, poet.`)},
+      {label:"2) Let me fart to your face", onPick: () => wrongAnswer("Echo Traveler", `Absolutely not. Try again.`)},
+      {label:"3) I pooped", onPick: () => wrongAnswer("Echo Traveler", `Romance level: <b>zero</b>. Try again.`)},
+      {label:"4) I love you, my gorgeous princess", onPick: () => {
+        correctAnswerSound();
+        awardWord("LOVE");
+        npcs.kate.visible = true;
+        state.stage = 4;
+        updateQuest();
+        openDialog({
+          name:"Echo Traveler",
+          text: `
+            Great! I think you're ready to be a great boyfriend.<br><br>
+            Remember to be gentle, loving, do what you promised and never disappoint your princess!<br><br>
+            Here’s your last hint—go find your love.
+          `,
+          choices:[{label:"Pick up my hint (LOVE)", onPick: () => setModalVisible(false)}],
+          hint:"Click to continue"
+        });
+      }},
+    ],
+    hint:"Choose one"
+  });
+}
+
+/* =========================
+   KATE + HACK TASK
+   ========================= */
+function kateIntro(){
+  if (state.stage < 4) return;
+  openDialog({
+    name:"Kate",
+    text: `
+      Hello, darling! You look so handsome and you smell so good.<br><br>
+      I'm thrilled to announce you already triggered <b>knock-knock</b> in my chest…<br>
+      BUT... you need to do a couple more things to prove you're worthy.<br><br>
+      I heard you're good at hacking. Let’s see if you can <b>hack my heart</b> and get <b>root access</b>.
+    `,
+    choices:[{label:"Start the heart hack", onPick: () => { setModalVisible(false); openHeartHack(); }}],
+    hint:"Click Start"
+  });
+}
+function openHeartHack(){
+  const hasAll = state.words.has("SPECALS") && state.words.has("RELAX") && state.words.has("LOVE");
+  if (!hasAll){
+    openDialog({
+      name:"Kate",
+      text:`You’re missing something, love. Bring me all three words first.`,
+      choices:[{label:"Okay", onPick: () => setModalVisible(false)}],
+      hint:"Click"
+    });
+    return;
+  }
+  openDialog({
+    name:"Heart Terminal",
+    text: `
+      <b>Authorized Training Simulation</b><br><br>
+      Step 1: Enter the token in the correct order:<br>
+      <b>SPECALS-RELAX-LOVE</b>
+    `,
+    choices:[
+      {label:"Enter token", onPick: () => { setModalVisible(false); tokenPrompt(); }},
+      {label:"Cancel", onPick: () => setModalVisible(false)}
+    ],
+    hint:"Choose"
+  });
+}
+function tokenPrompt(){
+  const token = prompt("Enter token (SPECALS-RELAX-LOVE)", "");
+  if (token === null) return;
+
+  if (token.trim().toUpperCase() !== "SPECALS-RELAX-LOVE"){
+    retryFn = tokenPrompt;
+    wrongAnswer("Heart Terminal", `Nope. Try again, hacker 😌`);
+    return;
+  }
+
+  openDialog({
+    name:"Heart Terminal",
+    text:`Step 2: Choose the authorized endpoint to retrieve the artifact.`,
+    choices:[
+      {label:"GET /api/heart/flag (authorized)", onPick: () => { setModalVisible(false); revealFlag(); }},
+      {label:"GET /api/admin/flag (suspicious)", onPick: () => wrongAnswer("Heart Terminal", `Denied: Not authorized.`)},
+      {label:"POST /api/flag?debug=true (sketchy)", onPick: () => wrongAnswer("Heart Terminal", `Denied: Not authorized.`)}
+    ],
+    hint:"Choose one"
+  });
+}
+function revealFlag(){
+  state.flagRevealed = true;
+  updateQuest();
+  addLog(`<span class="sys">Terminal output:</span> <b>${escapeHTML(FINAL_FLAG)}</b>`, "line");
+
+  openDialog({
+    name:"Heart Terminal",
+    text:`Flag retrieved:<br><br><b>${escapeHTML(FINAL_FLAG)}</b><br><br>Now submit it on the right panel.`,
+    choices:[{label:"Close", onPick: () => setModalVisible(false)}],
+    hint:"Click"
+  });
+}
+
+/* =========================
+   FLAG SUBMIT -> FINAL ANSWER
+   ========================= */
+submitFlagBtn.addEventListener("click", () => {
+  if (submitFlagBtn.classList.contains("disabled")) return;
+  const ok = (flagInput.value || "").trim() === FINAL_FLAG;
+  if (!ok){
+    playOneShotAndResume(musicWrong);
+    addLog(`<span class="warn">✖ Incorrect flag.</span>`, "line");
+    return;
+  }
+  playOneShotAndResume(musicCorrect);
+  addLog(`<span class="sys">✔ Flag accepted.</span>`, "line");
+  state.stage = 5;
+  updateQuest();
+  openFinalAnswer();
+});
+
+function openFinalAnswer(){
+  openDialog({
+    name:"Kate",
+    text: `
+      Wow, you're really as good as I heard you are.<br><br>
+      One last thing — guess what you need to do now 😇
+      <div style="margin-top:10px; font-size:12px; color:rgba(255,238,246,.72)">
+        Hints: <b>3 words</b> · related to <b>biscuits</b> · that will make me want to bite you
+      </div>
+      <div style="margin-top:12px">
+        <input id="finalAnswer" placeholder="Type your answer..." style="width:100%" />
+      </div>
+    `,
+    choices:[
+      {label:"Submit", onPick: () => checkFinalAnswer()},
+      {label:"Close", onPick: () => setModalVisible(false)}
+    ],
+    hint:"Type and Submit (Esc closes)"
+  });
+}
+function checkFinalAnswer(){
+  const el = document.getElementById("finalAnswer");
+  const v = (el?.value || "").trim().toLowerCase();
+  if (v === "shake my ass"){
+    state.finalAccepted = true;
+    setModalVisible(false);
+    startFinalKissesScene();
+  } else {
+    retryFn = openFinalAnswer;
+    wrongAnswer("Kate", `Not quite 😌 Try again.`);
+  }
+}
+
+/* =========================
+   FINAL CUTSCENE + LONG SCROLL MESSAGE + 15s GATE
+   ========================= */
+function startFinalKissesScene(){
+  state.cutscene = true;
+  state.stage = 6;
+  updateQuest();
+
+  // Switch to final kisses music (music4)
+  stopAllMusic();
+  currentMode = "final";
+  if (musicOn) musicFinal.play().catch(()=>{});
+
+  // Start walk
+  cutsceneTargetReached = false;
+  addLog(`<span class="npc">Kate:</span> Final reward sequence engaged 💋`, "line");
+}
+
+let cutsceneTargetReached = false;
+
+function burstHeartsAndKisses(x,y,count=30){
+  for (let i=0;i<count;i++){
+    const a = Math.random()*Math.PI*2;
+    const sp = 1 + Math.random()*2.6;
+    const type = (Math.random()<0.25) ? "💋" : "💗";
+    spawnParticle(type, x, y, Math.cos(a)*sp, Math.sin(a)*sp - 1.8, 140, 18 + Math.random()*12, 1);
+  }
+}
+
+function showFinalGiftDialogWithGate(){
+  // Make it long enough to scroll
+  const LONG_TEXT = `
+    <div style="max-height:320px; overflow:auto; padding-right:8px;">
+      <div style="font-size:18px; color:rgba(255,211,110,.95); margin-bottom:10px;">
+        Ohhhh yeeeeees, baybe! <b>SHAKE IT FOR ME!</b> 💋
+      </div>
+
+      <div style="line-height:1.55;">
+        Okay… okay… I see what kind of hacker you are 😌<br><br>
+
+        You didn’t just break into my heart.<br>
+        You got <b>root access</b>, changed the permissions to “forever,” and somehow managed to make
+        all my alarms go off in the cutest way possible. 💗<br><br>
+
+        Let’s review your mission report, Mr. Dragonborn:<br>
+        • You passed the Ranger’s checkpoint without getting banned (barely).<br>
+        • You impressed the Moonlit Warrior with your 24/7 devotion (insane, but hot).<br>
+        • You made the Echo Traveler believe you can be romantic (a rare achievement).<br>
+        • And then… you hacked my heart like it was a CTF with extra kisses. 💋<br><br>
+
+        Now here’s the funny part—this village has strict policy enforcement too:<br>
+        <b>Policy #1:</b> If I’m sad, you don’t “troubleshoot” me… you hug me.<br>
+        <b>Policy #2:</b> If I say “I’m fine,” your job is to investigate until the truth is found 😇<br>
+        <b>Policy #3:</b> If you ever choose “Kick her ass” again, I will uninstall you and delete your cache.<br><br>
+
+        But for real… you make my days lighter.<br>
+        You make me laugh when I want to be serious, and you make me feel safe when life gets loud.<br><br>
+
+        And I love the way you’re strong but still soft with me.<br>
+        The way you listen. The way you try. The way you care—even when you pretend you’re “too busy.”<br><br>
+
+        So yes… you are so hot, now I’m all yours.<br>
+        And I have a gift for you as well…<br><br>
+
+        But first, I want you to stay here with me for a moment.<br>
+        Listen to this song. Breathe. Smile. Imagine me looking at you with that “yeah, you’re mine” face. 💋<br><br>
+
+        <div style="padding:12px; border:1px solid rgba(255,105,180,.25); border-radius:12px; background:rgba(0,0,0,.35);">
+          <b>Gift unlocks in:</b> <span id="giftTimer" style="color:rgba(102,252,241,.95)">15</span> seconds<br>
+          <span style="color:rgba(255,238,246,.7); font-size:12px;">
+            No cheating. I want you to listen and enjoy this moment 😌
+          </span>
+        </div>
+
+        <div style="margin-top:14px; color:rgba(255,238,246,.7); font-size:12px;">
+          Tip: scroll up if you missed anything ☝️
+        </div>
+      </div>
+    </div>
+  `;
+
+  openDialog({
+    name:"Kate 💋",
+    text: LONG_TEXT,
+    choices:[
+      {label:"Pick up my gift 🎁 (locked)", disabled:true, onPick: () => { window.location.href = GIFT_LINK_PLACEHOLDER; }},
+      {label:"Close", onPick: () => setModalVisible(false)}
+    ],
+    hint:"Enjoy the song 💗"
+  });
+
+  // Gate unlocking
+  const btns = dlgChoices.querySelectorAll("button");
+  const giftBtn = btns[0];
+
+  let seconds = 15;
+  const timerEl = document.getElementById("giftTimer");
+
+  const interval = setInterval(() => {
+    seconds--;
+    if (timerEl) timerEl.textContent = String(seconds);
+    if (seconds <= 0){
+      clearInterval(interval);
+      if (timerEl) timerEl.textContent = "0";
+      giftBtn.disabled = false;
+      giftBtn.style.opacity = "1";
+      giftBtn.style.pointerEvents = "auto";
+      giftBtn.textContent = "Pick up my gift 🎁";
+    }
+  }, 1000);
+}
+
+/* =========================
+   DRAW HELPERS
+   ========================= */
+function drawSprite(img, feetX, feetY, w, h, facing=1, bob=0){
+  const sx = feetX - camera.x;
+  const sy = feetY - camera.y;
+
+  ctx.beginPath();
+  ctx.ellipse(sx, sy - 6, w*0.18, w*0.08, 0, 0, Math.PI*2);
+  ctx.fillStyle = "rgba(0,0,0,0.25)";
+  ctx.fill();
+
+  ctx.save();
+  ctx.translate(sx, sy - h + bob);
+  ctx.scale(facing, 1);
+  ctx.drawImage(img, -w/2, 0, w, h);
+  ctx.restore();
+}
+function drawMarker(npc, emoji="💗"){
+  const sx = npc.x - camera.x;
+  const sy = npc.y - camera.y - npc.h - 12;
+  ctx.font = "22px ui-monospace, monospace";
+  ctx.fillText(emoji, sx - 10, sy);
+}
+function drawTag(text, x, y){
+  ctx.font = "12px ui-monospace, monospace";
+  const padX = 8;
+  const w = ctx.measureText(text).width + padX*2;
+  const h = 22;
+  ctx.fillStyle = "rgba(0,0,0,0.62)";
+  ctx.strokeStyle = "rgba(102,252,241,0.25)";
+  roundRect(ctx, x - w/2, y - h, w, h, 10);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = "rgba(255,238,246,0.95)";
+  ctx.fillText(text, x - w/2 + padX, y - 8);
+}
+function roundRect(ctx, x, y, w, h, r){
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.arcTo(x+w, y, x+w, y+h, r);
+  ctx.arcTo(x+w, y+h, x, y+h, r);
+  ctx.arcTo(x, y+h, x, y, r);
+  ctx.arcTo(x, y, x+w, y, r);
+  ctx.closePath();
+}
+function drawBackground(){
+  const sx = -camera.x * 0.02;
+  const sy = -camera.y * 0.02;
+  ctx.drawImage(bgImg, sx, sy, cv.width - sx*2, cv.height - sy*2);
+}
+
+/* =========================
+   LOOP
+   ========================= */
+let heartTicker = 0;
+
+function step(){
+  if (dialogOpen || state.cutscene || state.stage === 0) return;
+
+  let vx=0, vy=0;
+  if (keys.has("w")) vy -= 1;
+  if (keys.has("s")) vy += 1;
+  if (keys.has("a")) vx -= 1;
+  if (keys.has("d")) vx += 1;
+
+  const moving = (vx !== 0 || vy !== 0);
+  if (moving){
+    const mag = Math.hypot(vx,vy) || 1;
+    vx = (vx/mag) * player.speed;
+    vy = (vy/mag) * player.speed;
+    if (vx > 0.05) player.facing = 1;
+    else if (vx < -0.05) player.facing = -1;
+    player.bobPhase += 0.18;
+  }
+
+  player.x = clamp(player.x + vx, 80, world.w - 80);
+  player.y = clamp(player.y + vy, 240, world.h - 40);
+  updateCamera();
+}
+
+function stepCutscene(){
+  if (!state.cutscene) return;
+
+  const k = npcs.kate;
+  if (!k.visible) k.visible = true;
+
+  const targetX = player.x - 70;
+  const targetY = player.y;
+
+  const dx = targetX - k.x;
+  const dy = targetY - k.y;
+  const d = Math.hypot(dx,dy);
+
+  if (d > 3){
+    k.x += (dx / d) * 2.1;
+    k.y += (dy / d) * 2.1;
+
+    if (Math.random() < 0.22){
+      const type = (Math.random()<0.25) ? "💋" : "💗";
+      spawnParticle(type, k.x, k.y - 160, (Math.random()-0.5)*0.35, -0.8-Math.random()*0.25, 90, 16+Math.random()*10, 0.9);
+    }
+    updateCamera();
+  } else if (!cutsceneTargetReached){
+    cutsceneTargetReached = true;
+    burstHeartsAndKisses(player.x, player.y - 150, 65);
+
+    setTimeout(() => {
+      state.cutscene = false;
+      showFinalGiftDialogWithGate();
+    }, 850);
+  }
+}
+
+function draw(){
+  ctx.clearRect(0,0,cv.width,cv.height);
+  drawBackground();
+
+  // ambient hearts
+  heartTicker++;
+  if (heartTicker % 24 === 0){
+    const x = camera.x + Math.random()*cv.width;
+    const y = camera.y + 80 + Math.random()*160;
+    spawnParticle("💗", x, y, (Math.random()-0.5)*0.25, -0.35 - Math.random()*0.2, 170, 12 + Math.random()*10, 0.65);
+  }
+  // extra hearts around Kate when visible
+  if (npcs.kate.visible && (heartTicker % 10 === 0)){
+    spawnParticle("💗", npcs.kate.x, npcs.kate.y - 160, (Math.random()-0.5)*0.35, -0.65 - Math.random()*0.25, 120, 16 + Math.random()*12, 0.9);
+  }
+
+  // NPCs
+  for (const n of [npcs.ranger, npcs.warrior, npcs.echo, npcs.kate]){
+    if (!n.visible) continue;
+    drawSprite(n.img, n.x, n.y, n.w, n.h, 1, 0);
+  }
+
+  // Player
+  const bob = Math.sin(player.bobPhase) * 2.2;
+  drawSprite(mishaImg, player.x, player.y, player.w, player.h, player.facing, bob);
+
+  // markers
+  const target = currentQuestTarget();
+  if (target && target.visible) drawMarker(target, "❗");
+  if (npcs.kate.visible) drawMarker(npcs.kate, "💗");
+
+  // interaction label
+  const near = nearestNPC();
+  if (near && !dialogOpen && state.stage !== 0 && !state.cutscene){
+    const sx = player.x - camera.x;
+    const sy = player.y - camera.y - player.h - 10;
+    drawTag(`Talk to ${near.name} (E)`, sx, sy);
+  }
+
+  // particles
+  updateParticles();
+  for (const p of particles){
+    const sx = p.x - camera.x;
+    const sy = p.y - camera.y;
+    const t = p.age / p.life;
+    const a = (1 - t) * p.alpha;
+    ctx.globalAlpha = a;
+    ctx.font = `${Math.floor(p.size)}px ui-monospace, monospace`;
+    ctx.fillText(p.type, sx, sy);
+    ctx.globalAlpha = 1;
+  }
+}
+
+function loop(){
+  step();
+  stepCutscene();
+  draw();
+  requestAnimationFrame(loop);
+}
+
+/* =========================
+   INTRO
+   ========================= */
+function showIntro(){
+  dialogMode = "intro";
+  openDialog({
+    name:"💖 Welcome 💋",
+    text: `
+      <div class="bigTitle">💖 Village of Love 💋</div>
+      <div class="sparkleLine">
+        Welcome to our <b>Village of Love</b>, Michael.<br>
+        May every step you take lead you closer to the one who’s been waiting for you.<br><br>
+        Prove your tenderness, keep your promises… and claim your Valentine.
+      </div>
+      <div style="font-size:22px">💗 💋 💗 💋 💗</div>
+    `,
+    choices:[
+      {label:"Begin the Quest", onPick: () => {
+        dialogMode = "normal";
+        setModalVisible(false);
+        state.stage = 1;
+        updateQuest();
+        playMain(); // start music only after click
+        addLog(`<span class="sys">Quest:</span> Find the Valentine Ranger.`, "line");
+      }}
+    ],
+    hint:"Click Begin"
+  });
+}
+
+/* =========================
+   INIT
+   ========================= */
+addLog(`<span class="sys">Controls:</span> E interact · Esc close · P music toggle`, "line");
+renderInventory();
+updateQuest();
+updateCamera();
+showIntro();
+loop();
+</script>
+</body>
+</html>
+
+

@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Michael 💗 Kate — Valentine</title>
+
+<style>
+  :root{
+    --bg1:#160717;
+    --bg2:#2b0f2a;
+    --ink:#ffeef6;
+    --muted: rgba(255,238,246,.75);
+    --pink:#ff69b4;
+    --gold:#ffd36e;
+    --aqua:#66fcf1;
+    --card: rgba(10,18,22,.68);
+    --border: rgba(255,105,180,.28);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    min-height:100vh;
+    color:var(--ink);
+    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+    background:
+      radial-gradient(900px 700px at 20% 10%, rgba(255,105,180,.22), transparent 60%),
+      radial-gradient(900px 700px at 80% 30%, rgba(102,252,241,.12), transparent 55%),
+      radial-gradient(900px 700px at 60% 90%, rgba(255,211,110,.14), transparent 55%),
+      linear-gradient(145deg, var(--bg1), var(--bg2));
+    overflow-x:hidden;
+  }
+
+  /* floating hearts */
+  .floaters{
+    position:fixed; inset:0; pointer-events:none; overflow:hidden;
+    z-index:0;
+  }
+  .heart{
+    position:absolute;
+    font-size:18px;
+    opacity:.35;
+    animation: floatUp linear infinite;
+    filter: drop-shadow(0 8px 12px rgba(0,0,0,.45));
+  }
+  @keyframes floatUp{
+    from{ transform: translateY(110vh) translateX(0) scale(.9); }
+    to{ transform: translateY(-20vh) translateX(40px) scale(1.15); }
+  }
+
+  .wrap{
+    position:relative;
+    z-index:1;
+    max-width:1100px;
+    margin:0 auto;
+    padding:22px 18px 60px;
+    display:grid;
+    gap:16px;
+  }
+
+  .hero{
+    border:1px solid var(--border);
+    background: rgba(0,0,0,.25);
+    border-radius:22px;
+    padding:18px;
+    box-shadow: 0 30px 80px rgba(0,0,0,.45);
+    backdrop-filter: blur(8px);
+  }
+  .heroTop{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:14px;
+    flex-wrap:wrap;
+  }
+  h1{
+    margin:0;
+    font-size:28px;
+    letter-spacing:.2px;
+  }
+  .sub{
+    margin:10px 0 0;
+    color:var(--muted);
+    line-height:1.45;
+    max-width:780px;
+    font-size:15px;
+  }
+  .tiny{
+    margin-top:10px;
+    font-size:12px;
+    color:rgba(255,238,246,.55);
+  }
+  .badgeRow{
+    display:flex; flex-wrap:wrap; gap:8px; margin-top:12px;
+  }
+  .badge{
+    border:1px solid rgba(255,211,110,.35);
+    background: rgba(255,211,110,.10);
+    color:var(--gold);
+    padding:6px 10px;
+    border-radius:999px;
+    font-size:12px;
+    white-space:nowrap;
+  }
+  .btnRow{
+    display:flex;
+    gap:8px;
+    align-items:center;
+    justify-content:flex-end;
+    flex:1;
+    min-width:220px;
+  }
+  .btn{
+    border-radius:14px;
+    border:1px solid rgba(255,105,180,.28);
+    background: rgba(0,0,0,.45);
+    color:var(--ink);
+    padding:10px 12px;
+    font-weight:700;
+    cursor:pointer;
+    transition: transform .06s ease, border-color .2s ease, opacity .2s ease;
+    user-select:none;
+  }
+  .btn:hover{ border-color: rgba(102,252,241,.55); }
+  .btn:active{ transform: translateY(1px); }
+  .btn.secondary{
+    border-color: rgba(102,252,241,.18);
+    color: rgba(255,238,246,.85);
+  }
+
+  /* slideshow card */
+  .slideshow{
+    border:1px solid var(--border);
+    background: var(--card);
+    border-radius:22px;
+    padding:14px;
+    box-shadow: 0 24px 70px rgba(0,0,0,.38);
+    backdrop-filter: blur(8px);
+  }
+  .slideGrid{
+    display:grid;
+    grid-template-columns: 1.35fr .65fr;
+    gap:12px;
+    align-items:stretch;
+  }
+
+  .frame{
+    position:relative;
+    border-radius:20px;
+    overflow:hidden;
+    border:1px solid rgba(255,105,180,.20);
+    background: rgba(0,0,0,.35);
+    min-height: 420px;
+  }
+  .frame img{
+    width:100%; height:100%;
+    object-fit:cover;
+    display:block;
+    transform: scale(1.01);
+  }
+  .frameOverlay{
+    position:absolute;
+    left:12px; right:12px; bottom:12px;
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    align-items:center;
+    pointer-events:none;
+  }
+  .pill{
+    pointer-events:auto;
+    border:1px solid rgba(255,105,180,.30);
+    background: rgba(0,0,0,.55);
+    color:rgba(255,238,246,.92);
+    padding:6px 10px;
+    border-radius:999px;
+    font-size:12px;
+    backdrop-filter: blur(6px);
+    display:flex;
+    gap:8px;
+    align-items:center;
+  }
+  .pill b{ color: var(--gold); }
+  .pillHint{
+    border-color: rgba(102,252,241,.20);
+    color: rgba(255,238,246,.85);
+  }
+
+  .sidePanel{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+  .sideCard{
+    border:1px solid rgba(102,252,241,.16);
+    background: rgba(0,0,0,.30);
+    border-radius:18px;
+    padding:12px;
+    color:rgba(255,238,246,.78);
+    line-height:1.45;
+    font-size:13px;
+  }
+  .sideCard b{ color: var(--ink); }
+  .statusLine{
+    font-size:12px;
+    color:rgba(255,238,246,.62);
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .statusLine span strong{ color: var(--aqua); }
+
+  /* message “stickers” */
+  .stickers{
+    display:grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap:10px;
+  }
+  .st{
+    border:1px solid rgba(255,105,180,.22);
+    background: rgba(0,0,0,.26);
+    border-radius:22px;
+    padding:14px 14px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.28);
+    backdrop-filter: blur(8px);
+    position:relative;
+    overflow:hidden;
+  }
+  .st::before{
+    content:"";
+    position:absolute; inset:-2px;
+    background:
+      radial-gradient(500px 180px at 20% 20%, rgba(255,105,180,.18), transparent 60%),
+      radial-gradient(500px 180px at 80% 70%, rgba(102,252,241,.10), transparent 60%);
+    pointer-events:none;
+  }
+  .stInner{ position:relative; display:flex; gap:10px; align-items:flex-start; }
+  .emoji{
+    font-size:22px;
+    filter: drop-shadow(0 10px 16px rgba(0,0,0,.35));
+    margin-top:1px;
+  }
+  .stText{
+    color:rgba(255,238,246,.86);
+    line-height:1.5;
+    font-size:14px;
+  }
+  .stText b{ color: var(--ink); }
+
+  /* different sizes */
+  .c4{ grid-column: span 4; }
+  .c5{ grid-column: span 5; }
+  .c6{ grid-column: span 6; }
+  .c7{ grid-column: span 7; }
+  .c8{ grid-column: span 8; }
+  .c12{ grid-column: span 12; }
+
+  /* autoplay blocked banner */
+  .banner{
+    display:none;
+    border:1px solid rgba(255,211,110,.35);
+    background: rgba(255,211,110,.10);
+    color: rgba(255,238,246,.92);
+    border-radius:18px;
+    padding:10px 12px;
+    font-size:13px;
+  }
+
+  @media (max-width: 920px){
+    .slideGrid{ grid-template-columns: 1fr; }
+    .frame{ min-height: 360px; }
+    .stickers{ grid-template-columns: repeat(6, 1fr); }
+    .c8,.c7,.c6,.c5,.c4{ grid-column: span 6; }
+    .btnRow{ justify-content:flex-start; min-width:auto; }
+  }
+</style>
+</head>
+
+<body>
+<div class="floaters" id="floaters"></div>
+
+<div class="wrap">
+  <div class="hero">
+    <div class="heroTop">
+      <div>
+        <h1>Michael 💗 Kate</h1>
+        <p class="sub">
+          You made it. You hacked my heart. You earned the reward. 💋<br>
+          Here’s our Valentine page: photos on shuffle up top… and my favorite words for you down below.
+        </p>
+        <div class="badgeRow">
+          <div class="badge">Achievement: “Root Access Granted”</div>
+          <div class="badge">Patch Notes: +Back Rubs</div>
+          <div class="badge">Lifetime License: Unlimited Kisses</div>
+        </div>
+        <div class="tiny">Tip: If music doesn’t start automatically, click anywhere once — browser rules.</div>
+      </div>
+      <div class="btnRow">
+        <div class="btn secondary" id="backBtn">← Back to game</div>
+        <div class="btn" id="toggleShuffleBtn">⏸ Pause shuffle</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="banner" id="banner">
+    🎵 Music is ready — click anywhere once to start it (browser autoplay rules).
+  </div>
+
+  <div class="slideshow">
+    <div class="slideGrid">
+      <div class="frame" id="frame">
+        <img id="slideImg" alt="Photo" />
+        <div class="frameOverlay">
+          <div class="pill"><b id="photoNum">#1</b> <span id="photoLabel">our moment 💗</span></div>
+          <div class="pill pillHint">Next: <b>→</b> · Prev: <b>←</b> · Fullscreen: <b>Click photo</b></div>
+        </div>
+      </div>
+
+      <div class="sidePanel">
+        <div class="sideCard">
+        
+          Stay here for a minute. Breathe. Smile. Think of me.
+        </div>
+
+        <div class="sideCard statusLine" style="display:none;">
+  <span><strong id="shuffleState">RUNNING</strong> · interval: <strong id="intervalLabel">3.5s</strong></span>
+  <span>photos: <strong id="countLabel">18</strong></span>
+</div>
+
+
+        <div class="sideCard">
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <div class="btn secondary" id="prevBtn">← Prev</div>
+            <div class="btn secondary" id="nextBtn">Next →</div>
+            <div class="btn secondary" id="speedBtn">Speed: Normal</div>
+          </div>
+          <div style="display:none; margin-top:10px; font-size:12px; color:rgba(255,238,246,.60);">
+  If any photo fails to load, check file names: <b>1.png … 18.png</b>
+</div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="stickers" id="stickers"></div>
+</div>
+
+<!-- Lightbox -->
+<div id="lbBack" style="position:fixed; inset:0; background:rgba(0,0,0,.78); display:none; align-items:center; justify-content:center; padding:18px; z-index:50;">
+  <div style="max-width:min(1100px,100%); max-height:min(92vh,100%); border-radius:18px; overflow:hidden; border:1px solid rgba(255,105,180,.35); box-shadow:0 30px 90px rgba(0,0,0,.65); background:rgba(0,0,0,.55); position:relative;">
+    <div style="position:absolute; top:10px; left:10px; right:10px; display:flex; justify-content:space-between; gap:10px;">
+      <div id="lbCap" style="border:1px solid rgba(255,105,180,.30); background:rgba(0,0,0,.55); color:rgba(255,238,246,.92); padding:6px 10px; border-radius:999px; font-size:12px; backdrop-filter: blur(6px);">
+        Photo
+      </div>
+      <div id="lbClose" style="cursor:pointer; user-select:none; border:1px solid rgba(255,105,180,.30); background:rgba(0,0,0,.55); color:rgba(255,238,246,.92); padding:6px 10px; border-radius:999px; font-size:12px; backdrop-filter: blur(6px);">
+        Close ✕
+      </div>
+    </div>
+    <img id="lbImg" alt="Photo" style="width:100%; height:auto; max-height:92vh; object-fit:contain; display:block; background:rgba(0,0,0,.35);" />
+  </div>
+</div>
+
+<script>
+/* =========================
+   ASSETS
+   ========================= */
+const PHOTO_COUNT = 18;
+const PHOTO_PATH = (i) => `gift_assets/photos/${i}.jpg`;
+const MUSIC_PATH = `gift_assets/music5.mp3`;
+
+/* =========================
+   AUTO MUSIC (attempt on load)
+   ========================= */
+const banner = document.getElementById("banner");
+const music = new Audio(MUSIC_PATH);
+music.loop = true;
+music.volume = 0.35;
+
+async function tryPlayMusic(){
+  try{
+    await music.play();
+    banner.style.display = "none";
+  } catch {
+    // Autoplay blocked -> show banner and start on first click
+    banner.style.display = "block";
+    const starter = async () => {
+      try{ await music.play(); banner.style.display="none"; } catch {}
+      window.removeEventListener("pointerdown", starter);
+      window.removeEventListener("keydown", starter);
+    };
+    window.addEventListener("pointerdown", starter);
+    window.addEventListener("keydown", starter);
+  }
+}
+tryPlayMusic();
+
+/* =========================
+   FLOATING HEARTS
+   ========================= */
+const floaters = document.getElementById("floaters");
+function spawnHeart(){
+  const s = document.createElement("div");
+  s.className = "heart";
+  s.textContent = Math.random() < 0.25 ? "💋" : "💗";
+  s.style.left = Math.floor(Math.random()*100) + "vw";
+  s.style.animationDuration = (10 + Math.random()*12) + "s";
+  s.style.opacity = (0.18 + Math.random()*0.35).toFixed(2);
+  s.style.fontSize = (14 + Math.random()*22).toFixed(0) + "px";
+  floaters.appendChild(s);
+  setTimeout(()=>s.remove(), 24000);
+}
+setInterval(spawnHeart, 700);
+for (let i=0;i<12;i++) spawnHeart();
+
+/* =========================
+   BUTTONS
+   ========================= */
+document.getElementById("backBtn").addEventListener("click", () => {
+  window.location.href = "index.html";
+});
+
+/* =========================
+   LIGHTBOX
+   ========================= */
+const lbBack = document.getElementById("lbBack");
+const lbImg = document.getElementById("lbImg");
+const lbCap = document.getElementById("lbCap");
+document.getElementById("lbClose").addEventListener("click", () => lbBack.style.display="none");
+lbBack.addEventListener("click", (e) => { if (e.target === lbBack) lbBack.style.display="none"; });
+window.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") lbBack.style.display="none";
+});
+function openLightbox(src, caption){
+  lbImg.src = src;
+  lbCap.textContent = caption;
+  lbBack.style.display = "flex";
+}
+
+/* =========================
+   SHUFFLE SLIDESHOW
+   ========================= */
+const slideImg = document.getElementById("slideImg");
+const frame = document.getElementById("frame");
+const photoNum = document.getElementById("photoNum");
+const photoLabel = document.getElementById("photoLabel");
+const shuffleState = document.getElementById("shuffleState");
+const intervalLabel = document.getElementById("intervalLabel");
+document.getElementById("countLabel").textContent = String(PHOTO_COUNT);
+
+const toggleShuffleBtn = document.getElementById("toggleShuffleBtn");
+const nextBtn = document.getElementById("nextBtn");
+const prevBtn = document.getElementById("prevBtn");
+const speedBtn = document.getElementById("speedBtn");
+
+let current = 1;
+let running = true;
+
+const speeds = [
+  {label:"Slow", ms: 5500},
+  {label:"Normal", ms: 3500},
+  {label:"Fast", ms: 2200}
+];
+let speedIdx = 1;
+
+let timer = null;
+function setIntervalLabel(){
+  intervalLabel.textContent = (speeds[speedIdx].ms/1000).toFixed(1) + "s";
+  speedBtn.textContent = "Speed: " + speeds[speedIdx].label;
+}
+setIntervalLabel();
+
+function pickRandomDifferent(){
+  let next = current;
+  if (PHOTO_COUNT <= 1) return 1;
+  while (next === current){
+    next = 1 + Math.floor(Math.random() * PHOTO_COUNT);
+  }
+  return next;
+}
+
+function showPhoto(i, labelText="our moment 💗"){
+  current = i;
+  slideImg.src = PHOTO_PATH(i);
+  photoNum.textContent = "#" + i;
+  photoLabel.textContent = labelText;
+}
+
+function restartShuffle(){
+  if (timer) clearInterval(timer);
+  if (!running) return;
+  timer = setInterval(() => {
+    showPhoto(pickRandomDifferent(), "shuffle 💗");
+  }, speeds[speedIdx].ms);
+}
+
+function updateShuffleUI(){
+  shuffleState.textContent = running ? "RUNNING" : "PAUSED";
+  toggleShuffleBtn.textContent = running ? "⏸ Pause shuffle" : "▶ Resume shuffle";
+}
+
+toggleShuffleBtn.addEventListener("click", () => {
+  running = !running;
+  updateShuffleUI();
+  restartShuffle();
+});
+
+speedBtn.addEventListener("click", () => {
+  speedIdx = (speedIdx + 1) % speeds.length;
+  setIntervalLabel();
+  restartShuffle();
+});
+
+nextBtn.addEventListener("click", () => {
+  showPhoto(pickRandomDifferent(), "next 💗");
+  restartShuffle();
+});
+prevBtn.addEventListener("click", () => {
+  // “prev” in shuffle mode = pick a new one (still feels like prev)
+  showPhoto(pickRandomDifferent(), "prev 💗");
+  restartShuffle();
+});
+
+// Arrow key support
+window.addEventListener("keydown", (e) => {
+  // ignore if typing
+  const tag = (document.activeElement?.tagName || "").toLowerCase();
+  const typing = tag === "input" || tag === "textarea";
+  if (typing) return;
+
+  if (e.key === "ArrowRight"){ showPhoto(pickRandomDifferent(), "next 💗"); restartShuffle(); }
+  if (e.key === "ArrowLeft"){ showPhoto(pickRandomDifferent(), "prev 💗"); restartShuffle(); }
+});
+
+// Click photo to open fullscreen
+frame.addEventListener("click", () => {
+  openLightbox(PHOTO_PATH(current), `Photo ${current} 💗`);
+});
+
+// Start
+showPhoto(1, "our moment 💗");
+updateShuffleUI();
+restartShuffle();
+
+/* =========================
+   LOVE “STICKER” BOXES
+   ========================= */
+const stickers = document.getElementById("stickers");
+
+const lines = [
+  {e:"💗", t:"I love you so much. Not the tiny cute kind… the <b>real</b> love that makes me feel safe and silly at the same time.", c:"c8"},
+  {e:"🌹", t:"Remember us two years ago? I still can’t believe how far we’ve come… and how we kept choosing each other.", c:"c4"},
+  {e:"💆‍♂️", t:"I promise you <b>more back massages</b>… and yes, I owe you one <b>right now</b>. (Present yourself, sir.) 😌", c:"c6"},
+  {e:"🛶", t:"I can’t wait to go <b>on a boat swimming</b> with you. Sun, water, you… and me pretending I’m brave. 💦", c:"c6"},
+  {e:"🤝", t:"Let’s never fight like enemies. If we argue, we do it like a team: <b>you + me vs the problem</b>.", c:"c5"},
+  {e:"✈️", t:"I loved all our trips. You gave me the best memories — and I want a million more chapters with you.", c:"c7"},
+  {e:"🧠", t:"I love your brain. I love your ambition. And yes… I love your muscles too. I’m only human. 😭💗", c:"c5"},
+  {e:"🏡", t:"No matter where we go, if I’m with you, it feels like <b>home</b>.", c:"c4"},
+  {e:"💌", t:"I know I’m not perfect, but I’m trying to be better for you… and I see you doing the same. That’s why I believe in us.", c:"c8"},
+  {e:"💋", t:"Thank you for being patient with me, for holding me, and for being my safe place when life gets loud.", c:"c6"},
+  {e:"🔥", t:"You’re my favorite person to laugh with… and my favorite person to annoy until you smile.", c:"c6"},
+  {e:"🔐", t:"If love was a security system, you’re the only one I’d give the master key to. (And yes, it’s <b>lifetime access</b>.)", c:"c12"},
+];
+
+function makeSticker({e,t,c}){
+  const d = document.createElement("div");
+  d.className = `st ${c}`;
+  d.innerHTML = `
+    <div class="stInner">
+      <div class="emoji">${e}</div>
+      <div class="stText">${t}</div>
+    </div>
+  `;
+  return d;
+}
+
+// Shuffle sticker order for variety
+for (const item of lines.sort(()=>Math.random()-0.5)){
+  stickers.appendChild(makeSticker(item));
+}
+</script>
+</body>
+</html>
